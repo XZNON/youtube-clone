@@ -15,4 +15,11 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" })); //to get data fr
 app.use(express.static("public")); //to store files or folders
 app.use(cookieParser());
 
+//routes import
+
+import userRouter from "./routes/user.routes.js";
+
+//routes declaration
+app.use("/api/v1/users", userRouter);
+
 export { app };
