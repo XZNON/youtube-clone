@@ -52,7 +52,7 @@ const userSchema = new Schema(
 userSchema.pre("save", async function (next) {
   //pre hook performs something before executing an operation
   if (!this.isModified("password")) return next(); //run this pre middle ware only if the password is changed
-  this.password = bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
