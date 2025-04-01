@@ -13,7 +13,7 @@ app.use(
 app.use(express.json({ limit: "16kb" })); //to get data from json
 app.use(express.urlencoded({ extended: true, limit: "16kb" })); //to get data from url
 app.use(express.static("public")); //to store files or folders
-app.use(cookieParser());
+app.use(cookieParser()); // to use cookies
 
 //routes import
 
