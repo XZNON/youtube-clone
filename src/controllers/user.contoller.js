@@ -350,7 +350,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
-  await user.save({ validateBeforeSave: false });
+  //dont need user.save() if we use findByIdAndUpdate()
 
   return res
     .status(200)
@@ -383,8 +383,6 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
       new: true,
     }
   ).select("-password");
-
-  await user.save({ validateBeforeSave: false });
 
   return res
     .status(200)
