@@ -318,6 +318,8 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     { new: true } //after updating you will get the new changed data
   ).select("-password");
 
+  await user.save({ validateBeforeSave: false });
+
   return res
     .status(200)
     .json(new ApiResponse(200, user, "account details updated successfully"));
@@ -347,6 +349,8 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     },
     { new: true }
   ).select("-password");
+
+  await user.save({ validateBeforeSave: false });
 
   return res
     .status(200)
@@ -379,6 +383,8 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
       new: true,
     }
   ).select("-password");
+
+  await user.save({ validateBeforeSave: false });
 
   return res
     .status(200)
