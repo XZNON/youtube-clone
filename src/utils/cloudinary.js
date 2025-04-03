@@ -1,5 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import { ApiError } from "./ApiError";
+import { ApiResponse } from "./ApiResponse";
 
 // Configuration
 cloudinary.config({
@@ -26,4 +28,24 @@ const uploadCloudinary = async (loclaFilePath) => {
   }
 };
 
-export { uploadCloudinary };
+const deleteCloudinary = async (fileUrl) => {
+  try {
+    const matches = imageUrl.match(/\/v\d+\/([^\.]+)/);
+    if (!matches) {
+      throw new ApiError(401, "Invalid cloudinary url");
+    }
+    const publicId = matches[1];
+
+    cloudinary.uploader.destroy(publicId, (error, result) => {
+      if (error) {
+        throw new ApiError(400, "could not delete image from cloudinary");
+      } else {
+        new ApiResponse(201, {}, "Image deleted successfully.");
+      }
+    });
+  } catch (error) {
+    throw new ApiError(401, "Error while deleting from cloudinary.");
+  }
+};
+
+export { uploadCloudinary, deleteCloudinary };

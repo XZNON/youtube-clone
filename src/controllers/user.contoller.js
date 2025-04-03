@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../modles/user.model.js";
-import { uploadCloudinary } from "../utils/cloudinary.js";
+import { deleteCloudinary, uploadCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 
@@ -152,6 +152,8 @@ const loginUser = asyncHandler(async (req, res) => {
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
+
+  // const loggedInUser = await User.findById(user._id).select("avatar");
 
   //options for cookies
   const options = {
@@ -306,7 +308,8 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required.");
   }
 
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
+    //always write await while talking to the database
     req.user?._id,
     {
       $set: {
@@ -329,12 +332,21 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   //get req.file from multer middleware
   const avatarLocalPath = req.file?.path;
 
+  //find the old avatar url and delete it
+  const oldUserAvatarPath = await User.findById(req.user?._id).select("avatar");
+
+  if (!oldUserAvatarPath) {
+    throw new ApiError(400, "Error while fetching old avatar url");
+  }
+
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is missing");
   }
 
   //upload the avatar on cloudinary
   const avatar = await uploadCloudinary(avatarLocalPath);
+
+  await deleteCloudinary(oldUserAvatarPath);
 
   if (!avatar.url) {
     throw new ApiError(400, "Error while uploading avatar");
@@ -361,12 +373,25 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   //get the local path from multer middleware
   const coverImageLocalPath = req.file?.path;
 
+  //delete the old cover photo from cloudinary
+  const oldUserCoverImageUrl = await User.findById(req.user?._id).select(
+    "coverImage"
+  );
+
+  if (!oldUserCoverImageUrl) {
+    throw new ApiError(
+      400,
+      "Error while fetching url for the old cover image from cloudinary."
+    );
+  }
+
   if (!coverImageLocalPath) {
     throw new ApiError(400, "Cover Image file is missing");
   }
 
   //upload the cover image in cloudinary
   const coverImage = await uploadCloudinary(coverImageLocalPath);
+  await deleteCloudinary(oldUserCoverImageUrl);
 
   if (!coverImage.url) {
     throw new ApiError(400, "Error while uploading cover image");
