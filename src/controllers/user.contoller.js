@@ -414,6 +414,81 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Cover Image updated successfully"));
 });
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  //get the username of the channel from the params not the body, i.e., the url
+  const { username } = req.params;
+
+  if (!username?.trim()) {
+    throw new ApiError(400, "Username is missing");
+  }
+
+  //use aggeregation pipelines to get the user from the database
+  const channel = await User.aggregate([
+    //find the user in the database
+    {
+      $match: { username: username?.toLowerCase() },
+    },
+    //find the subscribers of a channel
+    {
+      $lookup: {
+        from: "subscription", //from subscription schema
+        localField: "_id", //id is the local fields
+        foreignField: "channel", //to the the subscribers select all the channels
+        as: "subscribers",
+      },
+    },
+    {
+      //find the channels youve subscribed to
+      $lookup: {
+        from: "subscription",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        //find the count of subscribers and subscribed to using $size
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        channelsSubscribedToCount: {
+          $size: "subscribedTo",
+        },
+        //check if a user is subscribed to a channel
+        isSubscribed: {
+          //$cond to give an if then and  else statement
+          $cond: {
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] }, //check if the user is in subscribers, search for subscriber in subscribers field
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        fullName: 1,
+        username: 1,
+        subscribersCount: 1,
+        channelsSubscribedToCount: 1,
+        isSubscribed: 1,
+        avatar: 1,
+        coverImage: 1,
+        email: 1,
+      },
+    },
+  ]);
+  if (!channel?.length) {
+    throw new ApiError(404, "Channel does not exist.");
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, channel[0], "User channel fetched successfully.")
+    );
+});
+
 export {
   registerUser,
   loginUser,
@@ -424,4 +499,5 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannelProfile,
 };
