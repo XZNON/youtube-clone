@@ -27,9 +27,9 @@ router.route("/register").post(
 );
 
 router.route("/login").post(loginUser);
-router.route("/getUser").post(getCurrentUser);
 
 //secured routes
+router.route("/getUser").post(verifyJWT, getCurrentUser);
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
 
